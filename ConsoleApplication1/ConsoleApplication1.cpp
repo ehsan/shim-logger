@@ -14,6 +14,8 @@
 
 using namespace std;
 
+string fileName;
+
 string GetFileName() {
 	char buf[MAX_PATH+1] = {0};
 	if (!GetModuleFileNameA(NULL, buf, MAX_PATH)) {
@@ -46,9 +48,15 @@ void WriteArgsToFile(int argc, char* argv[], const char* tmpName, const char* cw
 unique_ptr<char[]> GetCommandLineString(int argc, char* argv[])
 {
 	vector<string> v;
+	bool isDashI = false;
 	for (int i = 1; i < argc; ++i) {
 		string str;
 		bool hasSpace = false;
+		if (isDashI) {
+			isDashI = false;
+			str = "-I ";
+			hasSpace = true;
+		}
 		char* s = argv[i];
 		while (*s) {
 			switch(*s) {
@@ -64,6 +72,11 @@ unique_ptr<char[]> GetCommandLineString(int argc, char* argv[])
 			}
 			++s;
 		}
+		// cl-specific hack!
+		if (fileName == "cl" && str == "-I") {
+			isDashI = true;
+			continue;
+		}
 		if (hasSpace) {
 			str = "\"" + str + "\"";
 		}
@@ -78,7 +91,7 @@ unique_ptr<char[]> GetCommandLineString(int argc, char* argv[])
 
 int main(int argc, char* argv[])
 {
-	string fileName = GetFileName();
+	fileName = GetFileName();
 	char realPath[MAX_PATH+1] = {0};
 	if (!GetEnvironmentVariableA(fileName.c_str(), realPath, MAX_PATH)) {
 		fprintf(stderr, "Could not locate environment variable %s\n", fileName.c_str());
