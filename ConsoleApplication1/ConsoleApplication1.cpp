@@ -47,19 +47,26 @@ unique_ptr<char[]> GetCommandLineString(int argc, char* argv[])
 {
 	vector<string> v;
 	for (int i = 1; i < argc; ++i) {
-		string str("\"");
+		string str;
+		bool hasSpace = false;
 		char* s = argv[i];
 		while (*s) {
 			switch(*s) {
 			case '\\':
 			case '"':
 				str += '\\';
+				str += *s;
+				break;
+			case ' ':
+				hasSpace = true;
 			default:
 				str += *s;
 			}
 			++s;
 		}
-		str += '\"';
+		if (hasSpace) {
+			str = "\"" + str + "\"";
+		}
 		v.push_back(str);
 	}
 	ostringstream cmdline;
