@@ -98,11 +98,15 @@ int main(int argc, char* argv[])
 	si.cb = sizeof(si);
 	PROCESS_INFORMATION pi = {0};
 	HANDLE stdoutr, stdoutw;
+	HANDLE stderrr, stderrw;
 	SECURITY_ATTRIBUTES sa = { sizeof(SECURITY_ATTRIBUTES), 0, 1 };
 	CreatePipe(&stdoutr, &stdoutw, &sa, 0);
 	SetHandleInformation(stdoutr, HANDLE_FLAG_INHERIT, 0);
+	CreatePipe(&stderrr, &stderrw, &sa, 0);
+	SetHandleInformation(stderrr, HANDLE_FLAG_INHERIT, 0);
 	si.dwFlags = STARTF_USESTDHANDLES;
-	si.hStdOutput = si.hStdError = stdoutw;
+	si.hStdOutput = stdoutw;
+	si.hStdError = stderrw;
 	si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
 	CreateProcessA(realPath,
 		           cmdline_str.get(),
@@ -114,18 +118,29 @@ int main(int argc, char* argv[])
 				   &si, &pi);
 	CloseHandle(pi.hThread);
 	CloseHandle(si.hStdOutput);
+	CloseHandle(si.hStdError);
 	CloseHandle(si.hStdInput);
 	typedef pair<char*, DWORD> Buf;
-	vector<Buf> bufs;
+	vector<Buf> bufs_out, bufs_err;
 	for (;;) {
 		DWORD read = 0;
 		char* buf = new char[10240];
 		bool res = ReadFile(stdoutr, buf, 10240, &read, NULL);
 		if (!res || !read) break;
-		bufs.push_back(make_pair(buf, read));
+		bufs_out.push_back(make_pair(buf, read));
 	}
-	for (auto& b : bufs) {
+	for (;;) {
+		DWORD read = 0;
+		char* buf = new char[10240];
+		bool res = ReadFile(stderrr, buf, 10240, &read, NULL);
+		if (!res || !read) break;
+		bufs_err.push_back(make_pair(buf, read));
+	}
+	for (auto& b : bufs_out) {
 		WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), b.first, b.second, &b.second, NULL);
+	}
+	for (auto& b : bufs_err) {
+		WriteFile(GetStdHandle(STD_ERROR_HANDLE), b.first, b.second, &b.second, NULL);
 	}
 	WaitForSingleObject(pi.hProcess, INFINITE);
 	DWORD exitCode;
