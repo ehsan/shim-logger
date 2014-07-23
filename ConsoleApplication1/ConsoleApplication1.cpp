@@ -38,9 +38,9 @@ void WriteArgsToFile(int argc, char* argv[], const char* tmpName, const char* cw
 	fopen_s(&f, tmpName, "w");
 	fprintf(f, "Current working directory: %s\n", cwd);
 	for (int i = 0; i < argc; ++i) {
-		bool hasSpace = strchr(argv[i], ' ');
-		fprintf(f, "%s%s%s%s", hasSpace ? "\"" : "", argv[i],
-			    hasSpace ? "\"" : "", i == (argc - 1) ? "" : " ");
+		bool hasSpecial = strchr(argv[i], ' ');
+		fprintf(f, "%s%s%s%s", hasSpecial ? "\"" : "", argv[i],
+			    hasSpecial ? "\"" : "", i == (argc - 1) ? "" : " ");
 	}
 	fclose(f);
 }
@@ -51,11 +51,11 @@ unique_ptr<char[]> GetCommandLineString(int argc, char* argv[])
 	bool isDashI = false;
 	for (int i = 1; i < argc; ++i) {
 		string str;
-		bool hasSpace = false;
+		bool hasSpecial = false;
 		if (isDashI) {
 			isDashI = false;
 			str = "-I ";
-			hasSpace = true;
+			hasSpecial = true;
 		}
 		char* s = argv[i];
 		while (*s) {
@@ -63,10 +63,8 @@ unique_ptr<char[]> GetCommandLineString(int argc, char* argv[])
 			case '\\':
 			case '"':
 				str += '\\';
-				str += *s;
-				break;
 			case ' ':
-				hasSpace = true;
+				hasSpecial = true;
 			default:
 				str += *s;
 			}
@@ -77,7 +75,7 @@ unique_ptr<char[]> GetCommandLineString(int argc, char* argv[])
 			isDashI = true;
 			continue;
 		}
-		if (hasSpace) {
+		if (hasSpecial) {
 			str = "\"" + str + "\"";
 		}
 		v.push_back(str);
