@@ -68,7 +68,6 @@ unique_ptr<char[]> GetCommandLineString(char* realPath, int argc, char* argv[], 
 		char* s = arg;
 		while (*s) {
 			switch(*s) {
-			case '\\':
 			case '"':
 				str += '\\';
 			case ' ':
