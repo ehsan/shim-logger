@@ -45,11 +45,11 @@ void WriteArgsToFile(int argc, char* argv[], const char* tmpName, const char* cw
 	fclose(f);
 }
 
-unique_ptr<char[]> GetCommandLineString(int argc, char* argv[], vector<int>& poison)
+unique_ptr<char[]> GetCommandLineString(char* realPath, int argc, char* argv[], vector<int>& poison)
 {
 	vector<string> v;
 	bool isDashI = false;
-	for (int i = 1; i < argc; ++i) {
+	for (int i = 0; i < argc; ++i) {
 		string str;
 		bool hasSpecial = false;
 		if (isDashI) {
@@ -57,10 +57,11 @@ unique_ptr<char[]> GetCommandLineString(int argc, char* argv[], vector<int>& poi
 			str = "-I ";
 			hasSpecial = true;
 		}
-		if (!poisonArg.empty() && !!strstr(argv[i], poisonArg.c_str())) {
+		char* arg = (i == 0) ? realPath : argv[i];
+		if (!poisonArg.empty() && !!strstr(arg, poisonArg.c_str())) {
 			poison.push_back(i);
 		}
-		char* s = argv[i];
+		char* s = arg;
 		while (*s) {
 			switch(*s) {
 			case '\\':
@@ -113,7 +114,7 @@ int main(int argc, char* argv[])
 	WriteArgsToFile(argc, argv, tmpName, cwd);
 
 	vector<int> poisoned;
-	auto cmdline_str = GetCommandLineString(argc, argv, poisoned);
+	auto cmdline_str = GetCommandLineString(realPath, argc, argv, poisoned);
 	if (poisoned.size()) {
 		fprintf(stderr, "Poisoned args found at index ");
 		for (auto& i : poisoned) {
@@ -137,7 +138,7 @@ int main(int argc, char* argv[])
 	si.hStdOutput = stdoutw;
 	si.hStdError = stderrw;
 	si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
-	CreateProcessA(realPath,
+	CreateProcessA(NULL,
 		           cmdline_str.get(),
 				   0, 0,
 				   TRUE,
