@@ -32,10 +32,14 @@ string GetFileName() {
 	return lastBackslash + 1;
 }
 
-void WriteArgsToFile(int argc, char* argv[], const char* tmpName, const char* cwd)
+void WriteArgsToFile(int argc, char* argv[], const char* cwd)
 {
 	FILE* f;
-	fopen_s(&f, tmpName, "w");
+	do {
+		// Loop as many times as needed until we can open a file successfully.
+		char* tmpName = _tempnam("", fileName.c_str());
+		fopen_s(&f, tmpName, "w");
+	} while(!f);
 	fprintf(f, "Current working directory: %s\n", cwd);
 	for (int i = 0; i < argc; ++i) {
 		bool hasSpecial = strchr(argv[i], ' ');
@@ -107,11 +111,10 @@ int main(int argc, char* argv[])
 	}
 	SetEnvironmentVariableA((fileName + "_poison").c_str(), NULL);
 
-	char* tmpName = _tempnam("", fileName.c_str());
 	char cwd[1024] = {0};
 	_getcwd(cwd, 1024);
 
-	WriteArgsToFile(argc, argv, tmpName, cwd);
+	WriteArgsToFile(argc, argv, cwd);
 
 	vector<int> poisoned;
 	auto cmdline_str = GetCommandLineString(realPath, argc, argv, poisoned);
