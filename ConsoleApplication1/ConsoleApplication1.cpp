@@ -94,11 +94,11 @@ int main(int argc, char* argv[])
 {
 	fileName = GetFileName();
 	char realPath[MAX_PATH+1] = {0};
-	if (!GetEnvironmentVariableA(fileName.c_str(), realPath, MAX_PATH)) {
+	if (!GetEnvironmentVariableA((fileName + "_cmd").c_str(), realPath, MAX_PATH)) {
 		fprintf(stderr, "Could not locate environment variable %s\n", fileName.c_str());
 		return 1;
 	}
-	SetEnvironmentVariableA(fileName.c_str(), NULL);
+	SetEnvironmentVariableA((fileName + "_cmd").c_str(), NULL);
 
 	char poison[1024];
 	if (GetEnvironmentVariableA((fileName + "_poison").c_str(), poison, 1024) < 1024) {
