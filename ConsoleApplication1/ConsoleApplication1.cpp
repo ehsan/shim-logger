@@ -14,7 +14,7 @@
 
 using namespace std;
 
-string fileName;
+string fileName, poisonArg;
 
 string GetFileName() {
 	char buf[MAX_PATH+1] = {0};
@@ -45,7 +45,7 @@ void WriteArgsToFile(int argc, char* argv[], const char* tmpName, const char* cw
 	fclose(f);
 }
 
-unique_ptr<char[]> GetCommandLineString(int argc, char* argv[])
+unique_ptr<char[]> GetCommandLineString(int argc, char* argv[], vector<int>& poison)
 {
 	vector<string> v;
 	bool isDashI = false;
@@ -56,6 +56,9 @@ unique_ptr<char[]> GetCommandLineString(int argc, char* argv[])
 			isDashI = false;
 			str = "-I ";
 			hasSpecial = true;
+		}
+		if (!poisonArg.empty() && !!strstr(argv[i], poisonArg.c_str())) {
+			poison.push_back(i);
 		}
 		char* s = argv[i];
 		while (*s) {
@@ -97,13 +100,27 @@ int main(int argc, char* argv[])
 	}
 	SetEnvironmentVariableA(fileName.c_str(), NULL);
 
+	char poison[1024];
+	if (GetEnvironmentVariableA((fileName + "_poison").c_str(), poison, 1024) < 1024) {
+		poisonArg = poison;
+	}
+
 	char* tmpName = _tempnam("", fileName.c_str());
 	char cwd[1024] = {0};
 	_getcwd(cwd, 1024);
 
 	WriteArgsToFile(argc, argv, tmpName, cwd);
 
-	auto cmdline_str = GetCommandLineString(argc, argv);
+	vector<int> poisoned;
+	auto cmdline_str = GetCommandLineString(argc, argv, poisoned);
+	if (poisoned.size()) {
+		fprintf(stderr, "Poisoned args found at index ");
+		for (auto& i : poisoned) {
+			fprintf(stderr, "%d ", i);
+		}
+		fprintf(stderr, "\nArguments: %s\n", cmdline_str.get());
+		return 254;
+	}
 
 	STARTUPINFOA si = {0};
 	si.cb = sizeof(si);
