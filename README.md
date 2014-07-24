@@ -10,3 +10,7 @@ mv ConsoleApplication1.exe cl.exe
 export cl_cmd="C:\\Program Files (x86)\\Microsoft Visual Studio 11.0\\VC\\bin\\cl.exe"
 # Run whatever command that ultimately runs the executable you would like to intercept
 make
+
+You can also poison a specific command line argument.  For example, to catch a case where we pass -MD to the compiler, you can set the following environmet variable before invoking the command:
+
+export cl_poison=-MD
