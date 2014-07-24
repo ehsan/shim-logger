@@ -156,15 +156,15 @@ int main(int argc, char* argv[])
 	vector<Buf> bufs_out, bufs_err;
 	for (;;) {
 		DWORD read = 0;
-		char* buf = new char[10240];
-		bool res = ReadFile(stdoutr, buf, 10240, &read, NULL);
+		char* buf = new char[1024];
+		bool res = ReadFile(stdoutr, buf, 1024, &read, NULL);
 		if (!res || !read) break;
 		bufs_out.push_back(make_pair(buf, read));
 	}
 	for (;;) {
 		DWORD read = 0;
-		char* buf = new char[10240];
-		bool res = ReadFile(stderrr, buf, 10240, &read, NULL);
+		char* buf = new char[1024];
+		bool res = ReadFile(stderrr, buf, 1024, &read, NULL);
 		if (!res || !read) break;
 		bufs_err.push_back(make_pair(buf, read));
 	}
