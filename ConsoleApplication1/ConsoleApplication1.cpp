@@ -104,6 +104,7 @@ int main(int argc, char* argv[])
 	if (GetEnvironmentVariableA((fileName + "_poison").c_str(), poison, 1024) < 1024) {
 		poisonArg = poison;
 	}
+	SetEnvironmentVariableA((fileName + "_poison").c_str(), NULL);
 
 	char* tmpName = _tempnam("", fileName.c_str());
 	char cwd[1024] = {0};
